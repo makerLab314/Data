@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Analysis</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js"></script>
+</head>
+<body>
+    <canvas id="matrix-canvas"></canvas>
+    <main class="dashboard">
+        <h1>// VISITOR ANALYSIS_</h1>
+        <div class="data-grid">
+            <div class="data-block">
+                <h2>Fingerprint</h2>
+                <p>Visitor ID: <span id="visitorId"></span></p>
+            </div>
+            <div class="data-block">
+                <h2>Geolocation</h2>
+                <p>IP: <span id="ip"></span></p>
+                <p>Location: <span id="city"></span>, <span id="region"></span>, <span id="country"></span></p>
+                <p>Provider: <span id="org"></span></p>
+                <p>Timezone: <span id="timezone"></span></p>
+            </div>
+             <div class="data-block">
+                <h2>Network Security</h2>
+                <p>VPN: <span id="isVpn"></span></p>
+                <p>Proxy: <span id="isProxy"></span></p>
+                <p>Tor: <span id="isTor"></span></p>
+            </div>
+            <div class="data-block">
+                <h2>Browser</h2>
+                <p>User Agent: <span id="userAgent"></span></p>
+                <p>Language: <span id="language"></span></p>
+                <p>Platform: <span id="platform"></span></p>
+                <p>Cookies Enabled: <span id="cookiesEnabled"></span></p>
+            </div>
+            <div class="data-block">
+                <h2>Device & Screen</h2>
+                <p>Resolution: <span id="screenWidth"></span>x<span id="screenHeight"></span></p>
+                <p>Color Depth: <span id="colorDepth"></span>-bit</p>
+                <p>Touch Support: <span id="isTouchDevice"></span></p>
+                <p>Dark Mode: <span id="prefersDarkMode"></span></p>
+            </div>
+            <div class="data-block">
+                <h2>Hardware</h2>
+                <p>CPU Cores (logical): <span id="hardwareConcurrency"></span></p>
+                <p>Device Memory (GB): <span id="deviceMemory"></span></p>
+                <p>Connection: <span id="connectionType"></span> (<span id="connectionEffectiveType"></span>)</p>
+            </div>
+        </div>
+        <p class="footer-note">Data stream established. Logging active...</p>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
