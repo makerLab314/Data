@@ -143,25 +143,24 @@ function displayData(data) {
 
 // DIAGNOSE-VERSION der sendDataToSheet Funktion in script.js
 
+// FINALE, KORREKTE sendDataToSheet Funktion in script.js
+
 function sendDataToSheet(data) {
-    // Wir gehen zurück zur FormData-Methode, die am robustesten gegen CORS ist.
-    // Das Diagnose-Skript kann beide Formate lesen.
-    const formData = new FormData();
-    
-    // Wir wandeln das komplexe Objekt in einen einzigen String um,
-    // damit wir sicher sind, dass es ankommt.
-    formData.append("payload", JSON.stringify(data));
-    
     fetch(GOOGLE_SCRIPT_URL, {
         method: 'POST',
-        body: formData
+        // KEIN 'no-cors' mehr! Wir wollen die Antwort jetzt lesen können.
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
     })
-    .then(response => {
-        // Obwohl wir die Antwort nicht lesen können, ist ein erfolgreicher
-        // Request ein gutes Zeichen.
-        console.log("Diagnose-Anfrage gesendet. Überprüfe das 'DebugLog' Tabellenblatt.");
+    .then(response => response.json()) // Wir wandeln die Antwort des Servers in ein JSON-Objekt um.
+    .then(result => {
+        // Jetzt können wir die Antwort vom Server in der Konsole sehen!
+        console.log('Antwort vom Server:', result);
     })
     .catch(error => {
-        console.error('Fehler beim Senden der Diagnose-Anfrage:', error);
+        // Echte Fehler werden hier abgefangen.
+        console.error('Fehler beim Senden der Daten:', error);
     });
 }
