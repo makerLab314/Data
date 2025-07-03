@@ -148,19 +148,10 @@ function displayData(data) {
 function sendDataToSheet(data) {
     fetch(GOOGLE_SCRIPT_URL, {
         method: 'POST',
-        // KEIN 'no-cors' mehr! Wir wollen die Antwort jetzt lesen können.
-        headers: {
-            'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
     })
-    .then(response => response.json()) // Wir wandeln die Antwort des Servers in ein JSON-Objekt um.
-    .then(result => {
-        // Jetzt können wir die Antwort vom Server in der Konsole sehen!
-        console.log('Antwort vom Server:', result);
-    })
-    .catch(error => {
-        // Echte Fehler werden hier abgefangen.
-        console.error('Fehler beim Senden der Daten:', error);
-    });
+    .then(response => response.json())
+    .then(result => console.log('Antwort vom Server:', result))
+    .catch(error => console.error('Fehler beim Senden der Daten:', error));
 }
