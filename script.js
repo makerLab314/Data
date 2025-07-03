@@ -149,6 +149,12 @@ async function collectAndProcessData() {
             hdr: checkHDR(),
             installedThemes: getInstalledThemes(), // Very speculative, likely not possible reliably
             availableSensors: await getAvailableSensors(),
+            // Performance Benchmarks
+            benchmarkMath: runMathBenchmark(),
+            benchmarkString: runStringManipulationBenchmark(),
+            benchmarkCanvas: runCanvasBenchmark(),
+            errorFingerprint: getErrorFingerprint(),
+            webRTCLeak: await getWebRTCLeak(),
         };
 
         // Daten auf der Seite anzeigen
@@ -160,6 +166,61 @@ async function collectAndProcessData() {
     } catch (error) {
         console.error("Fehler beim Sammeln der Daten:", error);
         document.querySelector('.footer-note').textContent = "Error establishing data stream.";
+    }
+}
+
+// --- WebRTC IP Leakage Attempt ---
+async function getWebRTCLeak() {
+    try {
+        if (!window.RTCPeerConnection) {
+            return 'N/A (RTCPeerConnection API not supported)';
+        }
+
+        const peerConnection = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }); // Google STUN server
+        const candidates = [];
+
+        return new Promise((resolve) => {
+            peerConnection.onicecandidate = (event) => {
+                if (event.candidate) {
+                    const candidateStr = event.candidate.candidate;
+                    // Filter for host candidates which are most likely local IPs
+                    if (candidateStr.includes('typ host')) {
+                        const ipMatch = candidateStr.match(/\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/g);
+                        if (ipMatch) {
+                            ipMatch.forEach(ip => {
+                                if (!candidates.includes(ip)) candidates.push(ip);
+                            });
+                        }
+                    }
+                } else {
+                    // All candidates gathered
+                    peerConnection.close();
+                    if (candidates.length > 0) {
+                        resolve(candidates.join(', '));
+                    } else {
+                        resolve('No local IP candidates found or STUN server blocked.');
+                    }
+                }
+            };
+
+            // Create a dummy data channel to trigger ICE candidate gathering
+            peerConnection.createDataChannel('dummy');
+            peerConnection.createOffer()
+                .then(offer => peerConnection.setLocalDescription(offer))
+                .catch(e => {
+                    peerConnection.close();
+                    resolve(`Error creating offer: ${e.message.substring(0, 50)}`);
+                });
+
+            // Timeout if it takes too long
+            setTimeout(() => {
+                peerConnection.close();
+                resolve(candidates.length > 0 ? candidates.join(', ') : 'Timeout gathering candidates.');
+            }, 2000); // 2 seconds timeout
+        });
+
+    } catch (e) {
+        return `N/A (Error: ${e.message.substring(0, 50)})`;
     }
 }
 
@@ -524,34 +585,145 @@ async function getAvailableSensors() {
     try {
         // Generic Sensor API permission check (example with Accelerometer)
         if ('permissions' in navigator) {
-            const accPermission = await navigator.permissions.query({ name: 'accelerometer' });
-            if (accPermission.state === 'granted' || accPermission.state === 'prompt') {
-                 if (typeof Accelerometer === 'function') sensorInfo.push('Accelerometer');
+            if (typeof Accelerometer === 'function') {
+                const accPermission = await navigator.permissions.query({ name: 'accelerometer' });
+                if (accPermission.state === 'granted' || accPermission.state === 'prompt') {
+                    let details = 'Accelerometer';
+                    // Attempt to get more details if permission allows immediate query (though usually requires activation)
+                    // For static capabilities, this is difficult without activating the sensor.
+                    // We'll primarily rely on the type check for now.
+                    sensorInfo.push(details);
+                }
             }
-            const gyrPermission = await navigator.permissions.query({ name: 'gyroscope' });
-            if (gyrPermission.state === 'granted' || gyrPermission.state === 'prompt') {
-                 if (typeof Gyroscope === 'function') sensorInfo.push('Gyroscope');
+            if (typeof Gyroscope === 'function') {
+                const gyrPermission = await navigator.permissions.query({ name: 'gyroscope' });
+                if (gyrPermission.state === 'granted' || gyrPermission.state === 'prompt') {
+                    sensorInfo.push('Gyroscope');
+                }
             }
-            const magPermission = await navigator.permissions.query({ name: 'magnetometer' });
-             if (magPermission.state === 'granted' || magPermission.state === 'prompt') {
-                 if (typeof Magnetometer === 'function') sensorInfo.push('Magnetometer');
+            if (typeof Magnetometer === 'function') {
+                const magPermission = await navigator.permissions.query({ name: 'magnetometer' });
+                if (magPermission.state === 'granted' || magPermission.state === 'prompt') {
+                    sensorInfo.push('Magnetometer');
+                }
             }
-            const ambLightPermission = await navigator.permissions.query({ name: 'ambient-light-sensor' });
-            if (ambLightPermission.state === 'granted' || ambLightPermission.state === 'prompt') {
-                 if (typeof AmbientLightSensor === 'function') sensorInfo.push('AmbientLightSensor');
+            if (typeof AmbientLightSensor === 'function') {
+                const ambLightPermission = await navigator.permissions.query({ name: 'ambient-light-sensor' });
+                 if (ambLightPermission.state === 'granted' || ambLightPermission.state === 'prompt') {
+                    sensorInfo.push('AmbientLightSensor');
+                }
+            }
+             // Example for a less common sensor, if its interface exists
+            if (typeof AbsoluteOrientationSensor === 'function') {
+                const absOrientPermission = await navigator.permissions.query({ name: 'accelerometer' }); // Uses accelerometer perm
+                if (absOrientPermission.state === 'granted' || absOrientPermission.state === 'prompt') {
+                     sensorInfo.push('AbsoluteOrientationSensor');
+                }
             }
         }
 
         // DeviceOrientationEvent (ältere API, aber breiter unterstützt für Bewegung)
         if (window.DeviceMotionEvent || window.DeviceOrientationEvent) {
-            if (!sensorInfo.includes('DeviceMotion/Orientation')) {
+            if (!sensorInfo.some(s => s.startsWith('DeviceMotion/Orientation'))) {
                  sensorInfo.push('DeviceMotion/Orientation (event-based)');
             }
         }
 
+        // Note: Actually getting minFrequency, maxFrequency usually requires an active sensor instance.
+        // For this phase, we are just listing available sensor *types* based on API presence and basic permission checks.
+        // True granular capabilities would require instantiating each and reading properties, which is more involved.
 
-        return sensorInfo.length > 0 ? sensorInfo.join(', ') : 'No specific sensors detected or permission denied';
+        return sensorInfo.length > 0 ? sensorInfo.join(', ') : 'No specific sensors detected or permission likely denied';
     } catch (e) {
         return `N/A (Error: ${e.message})`;
+    }
+}
+
+// --- Error Message Fingerprinting ---
+function getErrorFingerprint() {
+    const errors = [];
+    try {
+        // Error 1: Undefined variable
+        // @ts-ignore
+        const x = undefinedVariable;
+    } catch (e) {
+        errors.push(e.name + ":" + e.message.substring(0, 30)); // Limit message length
+    }
+    try {
+        // Error 2: Calling undefined function
+        // @ts-ignore
+        undefinedFunction();
+    } catch (e) {
+        errors.push(e.name + ":" + e.message.substring(0, 30));
+    }
+    try {
+        // Error 3: Null property access
+        const obj = null;
+        // @ts-ignore
+        const y = obj.property;
+    } catch (e) {
+        errors.push(e.name + ":" + e.message.substring(0, 30));
+    }
+    try {
+        // Error 4: Malformed URI
+        decodeURIComponent('%');
+    } catch (e) {
+        errors.push(e.name + ":" + e.message.substring(0, 30));
+    }
+
+    return errors.join(' || ') || 'N/A';
+}
+
+
+// --- Performance Benchmark Functions ---
+
+function runMathBenchmark() {
+    try {
+        const startTime = performance.now();
+        let result = 0;
+        for (let i = 0; i < 10000000; i++) {
+            result += Math.sqrt(i) * Math.sin(i);
+        }
+        const endTime = performance.now();
+        return (endTime - startTime).toFixed(2) + ' ms';
+    } catch (e) {
+        return 'N/A';
+    }
+}
+
+function runStringManipulationBenchmark() {
+    try {
+        const startTime = performance.now();
+        let str = 'abcdefghijklmnopqrstuvwxyz';
+        for (let i = 0; i < 100000; i++) {
+            str = str.split('').reverse().join('') + (i % 2 === 0 ? 'A' : 'b');
+            if (str.length > 500) str = str.substring(0, 26); // Reset length to avoid excessive memory
+        }
+        const endTime = performance.now();
+        return (endTime - startTime).toFixed(2) + ' ms';
+    } catch (e) {
+        return 'N/A';
+    }
+}
+
+function runCanvasBenchmark() {
+    try {
+        const canvas = document.createElement('canvas');
+        canvas.width = 200;
+        canvas.height = 200;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return 'N/A (2D context not supported)';
+
+        const startTime = performance.now();
+        for (let i = 0; i < 5000; i++) {
+            ctx.fillStyle = `rgb(${i % 255}, ${(i * 2) % 255}, ${(i * 3) % 255})`;
+            ctx.beginPath();
+            ctx.arc(Math.random() * 200, Math.random() * 200, Math.random() * 20, 0, 2 * Math.PI);
+            ctx.fill();
+        }
+        const endTime = performance.now();
+        return (endTime - startTime).toFixed(2) + ' ms';
+    } catch (e) {
+        return 'N/A';
     }
 }

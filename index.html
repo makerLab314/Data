@@ -89,6 +89,20 @@
                 <p>Media Devices: <span id="mediaDevices" class="long-data scrollable-data"></span></p>
                 <p>Available Sensors: <span id="availableSensors" class="long-data"></span></p>
             </div>
+            <div class="data-block">
+                <h2>Performance Benchmarks</h2>
+                <p>Math Benchmark: <span id="benchmarkMath"></span></p>
+                <p>String Manipulation Benchmark: <span id="benchmarkString"></span></p>
+                <p>Canvas Drawing Benchmark: <span id="benchmarkCanvas"></span></p>
+            </div>
+            <div class="data-block">
+                <h2>Error & Network Fingerprints</h2>
+                <p>JS Error Messages: <span id="errorFingerprint" class="long-data"></span></p>
+                <p>WebRTC Local IPs (Attempt): <span id="webRTCLeak" class="long-data"></span></p>
+                <p class="info-text">
+                    <strong>WebRTC IP Leakage:</strong> WebRTC (Web Real-Time Communication) can sometimes reveal your actual IP addresses (local and public via STUN requests) even if you are using a VPN. This section attempts to gather local IP candidates via client-side JavaScript. Browsers and VPNs are increasingly mitigating this. Full capture of public IP via STUN would require server-side logging. Results here may vary and might not show IPs if blocked by browser/VPN or if STUN servers are inaccessible.
+                </p>
+            </div>
         </div>
         <p class="footer-note">Data stream established. Logging active...</p>
     </main>
