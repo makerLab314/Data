@@ -141,28 +141,27 @@ function displayData(data) {
 // Funktion zum Senden der Daten
 // NEUE und VERBESSERTE sendDataToSheet Funktion in script.js
 
+// DIAGNOSE-VERSION der sendDataToSheet Funktion in script.js
+
 function sendDataToSheet(data) {
-    // Wir senden die Daten nicht mehr als FormData, sondern als JSON-String.
+    // Wir gehen zurück zur FormData-Methode, die am robustesten gegen CORS ist.
+    // Das Diagnose-Skript kann beide Formate lesen.
+    const formData = new FormData();
+    
+    // Wir wandeln das komplexe Objekt in einen einzigen String um,
+    // damit wir sicher sind, dass es ankommt.
+    formData.append("payload", JSON.stringify(data));
+    
     fetch(GOOGLE_SCRIPT_URL, {
         method: 'POST',
-        mode: 'no-cors', // Kann bei manchen Setups helfen, ist aber oft nicht nötig
-        cache: 'no-cache',
-        headers: {
-            'Content-Type': 'application/json' // Wichtig, aber da wir den Body umleiten, wird es ignoriert
-        },
-        // WICHTIG: Google Apps Script benötigt einen Workaround, um CORS-Probleme
-        // mit JSON zu umgehen. Wir leiten die Anfrage über einen Redirect.
-        // Das ist ein bekannter Trick, um 'no-cors' zu umgehen.
-        redirect: 'follow',
-        body: JSON.stringify(data) // Hier wird unser Daten-Objekt in einen Text umgewandelt
+        body: formData
     })
-    .then(() => {
-        // Da wir 'no-cors' und einen Redirect nutzen, bekommen wir keine lesbare Antwort zurück.
-        // Wir gehen einfach davon aus, dass es geklappt hat. Der Check passiert im Google Sheet.
-        console.log('Daten-Sendung initiiert. Überprüfe das Google Sheet.');
+    .then(response => {
+        // Obwohl wir die Antwort nicht lesen können, ist ein erfolgreicher
+        // Request ein gutes Zeichen.
+        console.log("Diagnose-Anfrage gesendet. Überprüfe das 'DebugLog' Tabellenblatt.");
     })
     .catch(error => {
-        // Dieser Fehler wird bei 'no-cors' oft trotzdem im Browser angezeigt, obwohl es funktioniert.
-        console.error('Fehler beim Senden (kann bei no-cors erwartet werden):', error);
+        console.error('Fehler beim Senden der Diagnose-Anfrage:', error);
     });
 }
