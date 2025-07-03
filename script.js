@@ -1,7 +1,7 @@
 // script.js
 
 // !!! WICHTIG: Ersetze diese URL mit deiner eigenen Web App URL aus dem Google Apps Script !!!
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyL3ogmd1KZpyqdcLvSGb-ftBQAJKPc3pCKfWInCs7an2sDM0Fg90BdFKy4t00bveH8/exec';
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw4r-JyfRL34EP7k9E10ywp-YkNL2Z16DlEjtJ1q6g/dev';
 
 document.addEventListener('DOMContentLoaded', () => {
     // Starte die Matrix-Animation
